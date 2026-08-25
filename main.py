@@ -28,3 +28,31 @@ def predict(customer_data: dict):
         "churn_probability": round(float(churn_prob), 4),
         "predicted_ltv": round(float(predicted_ltv), 2)
     }
+
+@app.post("/predict/batch")
+def predict_batch(customers: list[dict]):
+    results = []
+
+    for customer_data in customers:
+        # Build input for churn model
+        churn_df = pd.DataFrame([customer_data]).reindex(
+            columns=churn_features,
+            fill_value=0
+        )
+        churn_prob = churn_model.predict_proba(churn_df)[0][1]
+
+        # Build input for LTV model
+        ltv_df = pd.DataFrame([customer_data]).reindex(
+            columns=ltv_features,
+            fill_value=0
+        )
+        predicted_ltv = ltv_model.predict(ltv_df)[0]
+
+        results.append({
+            "churn_probability": round(float(churn_prob), 4),
+            "predicted_ltv": round(float(predicted_ltv), 2)
+        })
+
+    return {
+        "predictions": results
+    }
