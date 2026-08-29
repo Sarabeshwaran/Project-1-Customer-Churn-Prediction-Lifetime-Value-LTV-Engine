@@ -4,6 +4,7 @@ A predictive analytics system for telecom/subscription businesses that identifie
 
 **Status:** Weeks 1–3 complete (of 4). Week 4 (dashboards, containerization, docs) in progress.
 
+---
 
 ## Tech Stack
 
@@ -19,6 +20,7 @@ A predictive analytics system for telecom/subscription businesses that identifie
 ## Progress by Week
 
 ### ✅ Week 1 — Data Ingestion & EDA
+
 - Loaded the Telco dataset into a PostgreSQL database (`telco_churn`) via SQLAlchemy
 - Fixed a hidden data quality issue: `TotalCharges` was stored as text and had 11 blank values for brand-new customers (tenure = 0); converted to numeric and filled with 0
 - Explored churn patterns:
@@ -30,6 +32,7 @@ A predictive analytics system for telecom/subscription businesses that identifie
 **Notebooks:** `load_data.ipynb`, `eda_telco_churn.ipynb`
 
 ### ✅ Week 2 — Feature Engineering & Predictive Modeling
+
 - Engineered new features: `avg_monthly_spend`, `charge_diff` (current vs. historical spend), and `tenure_group` buckets
 - Trained and compared three classifiers: Logistic Regression, Random Forest, XGBoost
 - Addressed class imbalance using `scale_pos_weight` — improved churn-class recall from ~51% to **68%** (catching more actual churners), a deliberate trade-off against precision, appropriate for a retention use case where missing a churner is costlier than a false alarm
@@ -42,6 +45,7 @@ A predictive analytics system for telecom/subscription businesses that identifie
 **Final model:** XGBoost (class-balanced) — Precision 0.53 / Recall 0.68 / F1 0.60 on churn class
 
 ### ✅ Week 3 — LTV Calculation & API Development
+
 - Built an LTV regression target (`MonthlyCharges × tenure`) and trained a Random Forest regressor
 - **Caught and fixed a data leakage issue**: the first model version scored an unrealistic R² of 0.9998 because `tenure`/`MonthlyCharges` were both inputs and (via the formula) the answer. Removing them and relying on engineered features instead produced a trustworthy **R² of 0.95** — meaning the model can estimate LTV for a *brand-new* customer using only their profile (contract, services, payment method), not billing history
 - Built a **FastAPI service** (`main.py`) with:
@@ -53,6 +57,7 @@ A predictive analytics system for telecom/subscription businesses that identifie
 **Notebook:** `ltv_model.ipynb` · **API:** `main.py`
 
 ### 🔄 Week 4 — Visualization & Deployment (in progress)
+
 - Connected **Metabase** (via Docker) to the PostgreSQL database — dashboards in progress
 - Remaining: finalize dashboards, Docker containerize the full application, complete documentation
 
@@ -70,32 +75,13 @@ pip install -r requirements.txt
 #    (see load_data.ipynb to (re)load the raw dataset)
 
 # 3. Run the API
-uvicorn main:app --reload
+python -m uvicorn main:app --reload
+
 # → http://127.0.0.1:8000/docs
 
 # 4. Run dashboards (Metabase via Docker)
 docker run -d -p 3000:3000 --name metabase metabase/metabase
+
 # → http://localhost:3000
+
 # Connect with: Host=host.docker.internal, Port=5432, DB=telco_churn
-```
-
----
-
-## Key Findings (Business Summary)
-
-The highest churn-risk profile: **new customers, on month-to-month contracts, with high monthly charges, on fiber internet, paying by electronic check.** This is an actionable segment for targeted retention campaigns. Two-year contract customers are the company's most stable base and churn at under 3%.
-
----
-
-## Repository Structure
-
-```
-├── load_data.ipynb          # Week 1: raw data → PostgreSQL
-├── eda_telco_churn.ipynb    # Week 1: EDA, cleaning, encoding
-├── model_training.ipynb     # Week 2: churn classification models + SHAP
-├── ltv_model.ipynb          # Week 3: LTV regression model
-├── main.py                  # Week 3: FastAPI prediction service
-├── *.pkl                    # Saved trained models & feature lists
-├── .gitignore
-└── README.md
-```
