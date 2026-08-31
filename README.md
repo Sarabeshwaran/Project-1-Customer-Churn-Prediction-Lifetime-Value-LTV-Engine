@@ -50,6 +50,14 @@ A predictive analytics system for telecom/subscription businesses that identifie
   - Interactive docs at `/docs`
 - Saved trained models with `joblib` for the API to load without retraining
 
+#### Batch Prediction API Validation
+
+The `/predict/batch` endpoint supports predicting churn probability and Customer Lifetime Value (LTV) for multiple customers in a single request.
+
+- Accepts a list of customer data objects
+- Returns churn probability and predicted LTV for each customer
+- Handles an empty customer list with the error message: `Customer list cannot be empty`
+
 **Notebook:** `ltv_model.ipynb` · **API:** `main.py`
 
 ### 🔄 Week 4 — Visualization & Deployment (in progress)
