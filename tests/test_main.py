@@ -17,6 +17,29 @@ def test_predict_empty_data():
     assert response.status_code == 400
     assert response.json()["detail"] == "Customer data cannot be empty."
 
+def test_predict_invalid_data():
+    response = client.post(
+        "/predict",
+        json={"additionalProp1": {}}
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == (
+        "No recognized customer features were provided."
+    )
+
+
+def test_predict_batch_invalid_data():
+    response = client.post(
+        "/predict_batch",
+        json=[{"additionalProp1": {}}]
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == (
+        "No recognized customer features were provided."
+    )
+
 
 def test_predict():
     customer = {

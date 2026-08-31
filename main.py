@@ -33,6 +33,12 @@ def predict(customer_data: dict):
             detail="Customer data cannot be empty."
         )
 
+    if not any(feature in customer_data for feature in churn_features):
+        raise HTTPException(
+            status_code=400,
+            detail="No recognized customer features were provided."
+        )
+
     try:
         # Prepare input for churn model
         churn_df = pd.DataFrame([customer_data]).reindex(
@@ -70,6 +76,19 @@ def predict_batch(customers: list[dict]):
             status_code=400,
             detail="Customer list cannot be empty."
         )
+
+    for customer_data in customers:
+        if not customer_data:
+            raise HTTPException(
+                status_code=400,
+                detail="Customer data cannot be empty."
+            )
+
+        if not any(feature in customer_data for feature in churn_features):
+            raise HTTPException(
+                status_code=400,
+                detail="No recognized customer features were provided."
+            )
 
     results = []
 
