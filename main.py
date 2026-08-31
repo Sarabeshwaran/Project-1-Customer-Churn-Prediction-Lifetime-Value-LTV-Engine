@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 import joblib
 import pandas as pd
+from typing import List
 
 app = FastAPI()
 
