@@ -32,6 +32,10 @@ def predict(customer_data: dict):
 
 @app.post("/predict/batch")
 def predict_batch(customers: list[dict]):
+    if not customers:
+        return {
+            "error": "Customer list cannot be empty"
+        }
     results = []
 
     for customer_data in customers:
