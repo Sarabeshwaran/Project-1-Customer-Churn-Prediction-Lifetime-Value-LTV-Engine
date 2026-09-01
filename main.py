@@ -39,34 +39,26 @@ def predict(customer_data: dict):
             detail="No recognized customer features were provided."
         )
 
-    try:
-        # Prepare input for churn model
-        churn_df = pd.DataFrame([customer_data]).reindex(
-            columns=churn_features,
-            fill_value=0
-        )
+    # Build input for churn model
+    churn_df = pd.DataFrame([customer_data]).reindex(
+        columns=churn_features,
+        fill_value=0
+    )
 
-        churn_prob = churn_model.predict_proba(churn_df)[0][1]
+    churn_prob = churn_model.predict_proba(churn_df)[0][1]
 
-        # Prepare input for LTV model
-        ltv_df = pd.DataFrame([customer_data]).reindex(
-            columns=ltv_features,
-            fill_value=0
-        )
+    # Build input for LTV model
+    ltv_df = pd.DataFrame([customer_data]).reindex(
+        columns=ltv_features,
+        fill_value=0
+    )
 
-        predicted_ltv = ltv_model.predict(ltv_df)[0]
+    predicted_ltv = ltv_model.predict(ltv_df)[0]
 
-        return {
-            "churn_probability": round(float(churn_prob), 4),
-            "predicted_ltv": round(float(predicted_ltv), 2)
-        }
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Prediction failed: {str(e)}"
-        )
-
+    return {
+        "churn_probability": round(float(churn_prob), 4),
+        "predicted_ltv": round(float(predicted_ltv), 2)
+    }
 
 @app.post("/predict_batch")
 def predict_batch(customers: list[dict]):
