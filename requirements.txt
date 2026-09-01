@@ -4,5 +4,7 @@ pandas
 joblib
 scikit-learn
 xgboost
+sqlalchemy
+psycopg2-binary
 pytest
 httpx
