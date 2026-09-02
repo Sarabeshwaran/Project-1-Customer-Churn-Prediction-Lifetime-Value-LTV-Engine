@@ -140,3 +140,141 @@ SELECT
 FROM customers
 GROUP BY "Contract", "InternetService"
 ORDER BY churn_rate_percent DESC;
+
+-- ============================================================
+-- Prediction-Based Dashboard Queries
+-- Source: customer_predictions
+-- ============================================================
+
+-- 9. Overall Prediction KPIs
+-- Average predicted churn probability and average predicted LTV.
+
+SELECT
+    COUNT(*) AS total_predictions,
+    ROUND(AVG(churn_probability)::numeric, 4) AS avg_churn_probability,
+    ROUND(AVG(predicted_ltv)::numeric, 2) AS avg_predicted_ltv,
+    ROUND(SUM(predicted_ltv)::numeric, 2) AS total_predicted_ltv
+FROM customer_predictions;
+
+
+-- 10. Predicted LTV by Actual Churn Status
+-- Compares predicted customer value between churned and retained customers.
+
+SELECT
+    actual_churn,
+    COUNT(*) AS customers,
+    ROUND(AVG(predicted_ltv)::numeric, 2) AS avg_predicted_ltv,
+    ROUND(AVG(churn_probability)::numeric, 4) AS avg_churn_probability
+FROM customer_predictions
+GROUP BY actual_churn
+ORDER BY avg_predicted_ltv DESC;
+
+
+-- 11. High-Risk Customers
+-- Customers with churn probability of 70% or higher.
+
+SELECT
+    customerID,
+    ROUND(churn_probability::numeric, 4) AS churn_probability,
+    ROUND(predicted_ltv::numeric, 2) AS predicted_ltv,
+    actual_churn
+FROM customer_predictions
+WHERE churn_probability >= 0.70
+ORDER BY churn_probability DESC;
+
+
+-- 12. High-Risk, High-Value Customers
+-- Customers who have both high churn risk and high predicted LTV.
+-- These customers are strong candidates for targeted retention.
+
+SELECT
+    customerID,
+    ROUND(churn_probability::numeric, 4) AS churn_probability,
+    ROUND(predicted_ltv::numeric, 2) AS predicted_ltv,
+    actual_churn
+FROM customer_predictions
+WHERE churn_probability >= 0.70
+  AND predicted_ltv >= (
+      SELECT AVG(predicted_ltv)
+      FROM customer_predictions
+  )
+ORDER BY predicted_ltv DESC, churn_probability DESC;
+
+
+-- 13. Prediction Performance by Actual Churn
+-- Shows whether predicted churn probability differs
+-- between customers who actually churned and those retained.
+
+SELECT
+    actual_churn,
+    COUNT(*) AS customers,
+    ROUND(AVG(churn_probability)::numeric, 4) AS avg_predicted_churn_probability,
+    ROUND(MIN(churn_probability)::numeric, 4) AS min_churn_probability,
+    ROUND(MAX(churn_probability)::numeric, 4) AS max_churn_probability
+FROM customer_predictions
+GROUP BY actual_churn
+ORDER BY actual_churn;
+
+
+-- 14. Customer Value and Churn Risk Segments
+-- Creates four actionable business segments.
+
+SELECT
+    CASE
+        WHEN churn_probability >= 0.70
+             AND predicted_ltv >= (
+                 SELECT AVG(predicted_ltv)
+                 FROM customer_predictions
+             )
+            THEN 'High Risk / High Value'
+
+        WHEN churn_probability >= 0.70
+             AND predicted_ltv < (
+                 SELECT AVG(predicted_ltv)
+                 FROM customer_predictions
+             )
+            THEN 'High Risk / Low Value'
+
+        WHEN churn_probability < 0.70
+             AND predicted_ltv >= (
+                 SELECT AVG(predicted_ltv)
+                 FROM customer_predictions
+             )
+            THEN 'Low Risk / High Value'
+
+        ELSE 'Low Risk / Low Value'
+    END AS customer_segment,
+
+    COUNT(*) AS customers,
+    ROUND(AVG(churn_probability)::numeric, 4) AS avg_churn_probability,
+    ROUND(AVG(predicted_ltv)::numeric, 2) AS avg_predicted_ltv
+
+FROM customer_predictions
+
+GROUP BY
+    CASE
+        WHEN churn_probability >= 0.70
+             AND predicted_ltv >= (
+                 SELECT AVG(predicted_ltv)
+                 FROM customer_predictions
+             )
+            THEN 'High Risk / High Value'
+
+        WHEN churn_probability >= 0.70
+             AND predicted_ltv < (
+                 SELECT AVG(predicted_ltv)
+                 FROM customer_predictions
+             )
+            THEN 'High Risk / Low Value'
+
+        WHEN churn_probability < 0.70
+             AND predicted_ltv >= (
+                 SELECT AVG(predicted_ltv)
+                 FROM customer_predictions
+             )
+            THEN 'Low Risk / High Value'
+
+        ELSE 'Low Risk / Low Value'
+    END
+
+ORDER BY avg_predicted_ltv DESC;
