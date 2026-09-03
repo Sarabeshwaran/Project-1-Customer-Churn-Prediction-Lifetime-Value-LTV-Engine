@@ -139,3 +139,21 @@ def test_predict_batch():
 
     assert data["count"] == 2
     assert len(data["predictions"]) == 2
+def test_predict_batch_empty_data():
+    response = client.post(
+        "/predict_batch",
+        json=[]
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Customer list cannot be empty."
+
+
+def test_predict_batch_with_empty_customer():
+    response = client.post(
+        "/predict_batch",
+        json=[{}]
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Customer data cannot be empty."

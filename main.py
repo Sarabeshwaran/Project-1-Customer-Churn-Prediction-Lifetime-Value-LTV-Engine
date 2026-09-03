@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 import joblib
 import pandas as pd
 
@@ -8,7 +9,30 @@ app = FastAPI(
     version="1.0.0"
 )
 
+
+# ------------------------------------------------------------
+# Response Models
+# ------------------------------------------------------------
+
+class HealthResponse(BaseModel):
+    message: str
+    status: str
+
+
+class PredictionResponse(BaseModel):
+    churn_probability: float
+    predicted_ltv: float
+
+
+class BatchPredictionResponse(BaseModel):
+    count: int
+    predictions: list[PredictionResponse]
+
+
+# ------------------------------------------------------------
 # Load trained models and feature lists
+# ------------------------------------------------------------
+
 churn_model = joblib.load("churn_model.pkl")
 churn_features = joblib.load("churn_features.pkl")
 
@@ -16,7 +40,11 @@ ltv_model = joblib.load("ltv_model.pkl")
 ltv_features = joblib.load("ltv_features.pkl")
 
 
-@app.get("/")
+# ------------------------------------------------------------
+# Health Check
+# ------------------------------------------------------------
+
+@app.get("/", response_model=HealthResponse)
 def home():
     return {
         "message": "Churn & LTV Prediction API is running",
@@ -24,7 +52,11 @@ def home():
     }
 
 
-@app.post("/predict")
+# ------------------------------------------------------------
+# Single Customer Prediction
+# ------------------------------------------------------------
+
+@app.post("/predict", response_model=PredictionResponse)
 def predict(customer_data: dict):
 
     if not customer_data:
@@ -60,7 +92,15 @@ def predict(customer_data: dict):
         "predicted_ltv": round(float(predicted_ltv), 2)
     }
 
-@app.post("/predict_batch")
+
+# ------------------------------------------------------------
+# Batch Customer Prediction
+# ------------------------------------------------------------
+
+@app.post(
+    "/predict_batch",
+    response_model=BatchPredictionResponse
+)
 def predict_batch(customers: list[dict]):
 
     if not customers:
@@ -70,6 +110,7 @@ def predict_batch(customers: list[dict]):
         )
 
     for customer_data in customers:
+
         if not customer_data:
             raise HTTPException(
                 status_code=400,
@@ -116,6 +157,5 @@ def predict_batch(customers: list[dict]):
     except Exception as e:
         raise HTTPException(
             status_code=500,
-         
             detail=f"Batch prediction failed: {str(e)}"
         )
