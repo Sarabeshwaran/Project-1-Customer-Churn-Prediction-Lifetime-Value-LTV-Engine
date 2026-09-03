@@ -1,0 +1,5 @@
+venv/
+__pycache__/
+.vscode/
+*.ipynb
+Telco-Customer-Churn.csv
