@@ -2,7 +2,7 @@
 
 A predictive analytics system for telecom/subscription businesses that identifies customers at risk of churning and estimates their Customer Lifetime Value (LTV), helping marketing teams prioritize retention efforts.
 
-**Status:** Weeks 1–3 complete (of 4). Week 4 (dashboards, containerization, docs) in progress.
+**Status:** All 4 weeks complete — data pipeline, modeling, LTV, API, dashboards, and Docker containerization.
 
 
 ## Tech Stack
@@ -60,10 +60,17 @@ The `/predict/batch` endpoint supports predicting churn probability and Customer
 
 **Notebook:** `ltv_model.ipynb` · **API:** `main.py`
 
-### 🔄 Week 4 — Visualization & Deployment (in progress)
-- Connected **Metabase** (via Docker) to the PostgreSQL database — dashboards in progress
-- Remaining: finalize dashboards, Docker containerize the full application, complete documentation
+### ✅ Week 4 — Visualization & Deployment
+- Connected **Metabase** (via Docker) to the PostgreSQL database
+- Scored all 7,043 customers using the saved churn and LTV models, saving results (`churn_probability`, `predicted_ltv`) to a new `customer_predictions` table — closing the loop between the trained models and the dashboards
+- Built four dashboard charts, combined into a single Metabase Dashboard:
+  1. **Churn by Contract Type** — confirms month-to-month contracts churn at ~42% vs. under 3% for two-year contracts
+  2. **Average Monthly Charges by Tenure & Churn** — churned customers pay more per month than retained customers, at every tenure stage
+  3. **Revenue by Contract Type** — two-year contracts generate the most total revenue (~$6M); month-to-month still contributes ~$5.2M despite high churn
+  4. **Churn Risk vs. Predicted LTV** (scatter, all 7,043 customers) — the headline chart, directly identifying the priority segment (high value + high risk) for targeted retention spend
+- **Containerized the FastAPI service with Docker** (`Dockerfile`, `.dockerignore`, `requirements.txt`) — the API now runs as a portable, self-contained service, independent of any local Python setup
 
+See `docs/` for dashboard screenshots.
 ---
 
 ## How to Run This Project
@@ -105,5 +112,9 @@ The highest churn-risk profile: **new customers, on month-to-month contracts, wi
 ├── main.py                  # Week 3: FastAPI prediction service
 ├── *.pkl                    # Saved trained models & feature lists
 ├── .gitignore
+├── generate_predictions.ipynb  # Week 4: score all customers, save to customer_predictions
+├── Dockerfile                # Week 4: containerize the API
+├── .dockerignore
+├── docs/                     # dashboard screenshots
 └── README.md
 ```
