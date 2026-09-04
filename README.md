@@ -94,3 +94,13 @@ docker run -d -p 3000:3000 --name metabase metabase/metabase
 # → http://localhost:3000
 
 # Connect with: Host=host.docker.internal, Port=5432, DB=telco_churn
+
+### Run the API with Docker
+
+Docker can be used to run the FastAPI prediction service without
+installing the Python dependencies directly on the host machine.
+
+#### 1. Build the Docker image
+
+```bash
+docker build -t churn-ltv-api .
