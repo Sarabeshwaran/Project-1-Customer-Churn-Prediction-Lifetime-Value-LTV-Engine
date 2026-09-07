@@ -2,7 +2,7 @@
 
 A predictive analytics system for telecom/subscription businesses that identifies customers at risk of churning and estimates their Customer Lifetime Value (LTV), helping marketing teams prioritize retention efforts.
 
-**Status:** Weeks 1–3 complete (of 4). Week 4 (dashboards, containerization, docs) in progress.
+**Status:** All 4 weeks complete — data pipeline, modeling, LTV, API, dashboards, and Docker containerization.
 
 ---
 
