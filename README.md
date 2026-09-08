@@ -56,6 +56,8 @@ A predictive analytics system for telecom/subscription businesses that identifie
 
 #### API Usage
 
+**API Version:** 1.0.0
+
 The FastAPI service provides endpoints for health checks, single-customer prediction, and batch prediction.
 
 **1. Health Check**
