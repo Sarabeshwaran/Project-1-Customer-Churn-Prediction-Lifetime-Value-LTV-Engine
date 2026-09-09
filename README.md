@@ -2,7 +2,7 @@
 
 A predictive analytics system for telecom/subscription businesses that identifies customers at risk of churning and estimates their Customer Lifetime Value (LTV), helping marketing teams prioritize retention efforts.
 
-**Status:** All 4 weeks complete — data pipeline, modeling, LTV, API, dashboards, and Docker containerization.
+**Status:** All 4 weeks complete — data pipeline, modeling, LTV, API, dashboards, testing, and Docker deployment.
 
 ---
 
@@ -12,8 +12,13 @@ A predictive analytics system for telecom/subscription businesses that identifie
 - **Data Storage:** PostgreSQL, SQLAlchemy
 - **ML/Analysis:** Pandas, Scikit-Learn, XGBoost, SHAP
 - **API:** FastAPI
-- **Dashboards:** Metabase (via Docker)
-- **Dataset:** [Telco Customer Churn Dataset](https://www.kaggle.com/datasets/blastchar/telco-customer-churn) (7,043 customers, 21 raw features)
+- **Testing:** Pytest
+- **CI/CD:** GitHub Actions
+- **Dashboards:** Metabase
+- **Containerization:** Docker
+- **Dataset:** [Telco Customer Churn Dataset](https://www.kaggle.com/datasets/blastchar/telco-customer-churn)
+  - 7,043 customers
+  - 21 raw features
 
 ---
 
@@ -21,88 +26,85 @@ A predictive analytics system for telecom/subscription businesses that identifie
 
 ### ✅ Week 1 — Data Ingestion & EDA
 
-- Loaded the Telco dataset into a PostgreSQL database (`telco_churn`) via SQLAlchemy
-- Fixed a hidden data quality issue: `TotalCharges` was stored as text and had 11 blank values for brand-new customers (tenure = 0); converted to numeric and filled with 0
-- Explored churn patterns:
-  - **27% overall churn rate** (moderately imbalanced — accuracy alone is a misleading metric)
-  - **Contract type is the strongest single driver**: month-to-month customers churn at ~42%, one-year at ~11%, two-year at under 3%
-  - **Tenure matters**: churned customers have a median tenure of ~10 months vs. ~38 months for retained customers
-- One-hot encoded categorical variables into a model-ready table (`customers_encoded`)
+- Loaded the Telco dataset into a PostgreSQL database (`telco_churn`) using SQLAlchemy.
+- Fixed a data quality issue where `TotalCharges` was stored as text.
+- Identified 11 blank `TotalCharges` values for brand-new customers with tenure = 0 and converted them to numeric values, filling blanks with 0.
+- Explored major churn patterns:
+  - **27% overall churn rate**
+  - Month-to-month customers churn at approximately **42%**
+  - One-year contract customers churn at approximately **11%**
+  - Two-year contract customers churn at under **3%**
+  - Churned customers have a median tenure of approximately **10 months**, compared with approximately **38 months** for retained customers.
+- One-hot encoded categorical variables into a model-ready table (`customers_encoded`).
 
-**Notebooks:** `load_data.ipynb`, `eda_telco_churn.ipynb`
-
-### ✅ Week 2 — Feature Engineering & Predictive Modeling
-
-- Engineered new features: `avg_monthly_spend`, `charge_diff` (current vs. historical spend), and `tenure_group` buckets
-- Trained and compared three classifiers: Logistic Regression, Random Forest, XGBoost
-- Addressed class imbalance using `scale_pos_weight` — improved churn-class recall from ~51% to **68%** (catching more actual churners), a deliberate trade-off against precision, appropriate for a retention use case where missing a churner is costlier than a false alarm
-- Applied **SHAP** for explainability:
-  - Global driver ranking (tenure, contract length, monthly spend, fiber internet, payment method)
-  - Individual prediction breakdowns (waterfall plots) showing exactly why a given customer is flagged as high/low risk
-
-**Notebook:** `model_training.ipynb`
-
-**Final model:** XGBoost (class-balanced) — Precision 0.53 / Recall 0.68 / F1 0.60 on churn class
-
-### ✅ Week 3 — LTV Calculation & API Development
-
-- Built an LTV regression target (`MonthlyCharges × tenure`) and trained a Random Forest regressor
-- **Caught and fixed a data leakage issue**: the first model version scored an unrealistic R² of 0.9998 because `tenure`/`MonthlyCharges` were both inputs and (via the formula) the answer. Removing them and relying on engineered features instead produced a trustworthy **R² of 0.95** — meaning the model can estimate LTV for a *brand-new* customer using only their profile (contract, services, payment method), not billing history
-- Built a **FastAPI service** (`main.py`) with:
-  - `POST /predict` — single customer churn + LTV prediction
-  - `POST /predict_batch` — batch scoring for multiple customers at once
-  - Interactive docs at `/docs`
-- Saved trained models with `joblib` for the API to load without retraining
-
-#### API Usage
-
-**API Version:** 1.0.0
-
-The FastAPI service provides endpoints for health checks, single-customer prediction, and batch prediction.
-
-**1. Health Check**
-
-```http
-GET /
-
-**Notebook:** `ltv_model.ipynb` · **API:** `main.py`
-
-### 🔄 Week 4 — Visualization & Deployment (in progress)
-
-- Connected **Metabase** (via Docker) to the PostgreSQL database — dashboards in progress
-- Remaining: finalize dashboards, Docker containerize the full application, complete documentation
+**Notebooks:**
+- `load_data.ipynb`
+- `eda_telco_churn.ipynb`
 
 ---
 
-## How to Run This Project
+### ✅ Week 2 — Feature Engineering & Predictive Modeling
 
-```bash
-# 1. Set up virtual environment
-python -m venv venv
-venv\Scripts\activate          # Windows
-pip install -r requirements.txt
+- Engineered additional features:
+  - `avg_monthly_spend`
+  - `charge_diff`
+  - `tenure_group`
+- Trained and compared:
+  - Logistic Regression
+  - Random Forest
+  - XGBoost
+- Addressed class imbalance using `scale_pos_weight`.
+- Improved churn-class recall from approximately **51% to 68%**, prioritizing the detection of potential churners.
+- Applied **SHAP** for model explainability:
+  - Global feature importance
+  - Individual prediction explanations
+  - Waterfall plots for customer-level risk analysis
 
-# 2. Ensure PostgreSQL is running with the telco_churn database populated
-#    (see load_data.ipynb to (re)load the raw dataset)
+**Final churn model:** XGBoost with class balancing
 
-# 3. Run the API
-python -m uvicorn main:app --reload
+**Churn-class performance:**
+- Precision: **0.53**
+- Recall: **0.68**
+- F1 Score: **0.60**
 
-# → http://127.0.0.1:8000/docs
+**Notebook:** `model_training.ipynb`
 
-# 4. Run dashboards (Metabase via Docker)
-docker run -d -p 3000:3000 --name metabase metabase/metabase
+---
 
-# → http://localhost:3000
+### ✅ Week 3 — LTV Calculation & API Development
 
-# Connect with: Host=host.docker.internal, Port=5432, DB=telco_churn
+#### LTV Modeling
 
-### Run the API with Docker
+- Built an LTV regression target using:
 
-Docker can be used to run the FastAPI prediction service without
-installing the Python dependencies directly on the host machine.
+  `MonthlyCharges × tenure`
 
-#### 1. Build the Docker image
+- Trained a Random Forest regression model.
+- Identified and fixed a data leakage issue where `tenure` and `MonthlyCharges` were directly contributing to the target.
+- The initial model produced an unrealistic **R² of 0.9998**.
+- After removing the leakage-prone inputs and using engineered customer profile features, the model achieved a more trustworthy **R² of approximately 0.95**.
+- The resulting model can estimate LTV for a new customer using profile information rather than historical billing data.
 
-```bash
-docker build -t churn-ltv-api .
+**Notebook:** `ltv_model.ipynb`
+
+---
+
+#### FastAPI Prediction Service
+
+Built a FastAPI service in `main.py` that provides:
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/` | GET | API health check |
+| `/predict` | POST | Predict churn probability and LTV for one customer |
+| `/predict_batch` | POST | Predict churn probability and LTV for multiple customers |
+| `/docs` | GET | Interactive Swagger API documentation |
+
+### API Version
+
+**1.0.0**
+
+### Example Health Check
+
+```http
+GET /
