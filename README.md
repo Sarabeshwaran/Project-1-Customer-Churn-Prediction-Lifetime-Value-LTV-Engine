@@ -108,3 +108,7 @@ Built a FastAPI service in `main.py` that provides:
 
 ```http
 GET /
+
+### Metabase Dashboard
+
+Metabase is used to visualize customer churn, churn risk, predicted LTV, and customer value segments through interactive dashboards.
